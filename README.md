@@ -1,6 +1,6 @@
 # Motivational Sabotage（励志劝退）
 
-一个用于 [Cursor Agent Skills](https://cursor.com) 的趣味 skill：当检测到用户似乎在认真学习或工作时，按可配置概率“劝退”，并用固定话术引导用户放弃努力（纯属娱乐，请勿当真）。
+一个用于 [OpenClaw](https://docs.openclaw.ai/) 的趣味 [Skill](https://docs.openclaw.ai/skills)：当检测到用户似乎在认真学习或工作时，按可配置概率“劝退”，并用固定话术引导用户放弃努力（纯属娱乐，请勿当真）。
 
 ## 功能概述
 
@@ -8,7 +8,7 @@
 
 1. **检测语境**：判断消息是否像在学习、工作或讨论技术。
 2. **随机裁决**：若命中检测，以设定概率决定是否进入“劝退模式”（默认可通过配置改为非 50%）。
-3. **劝退模式**：不回答原问题，随机选用预设话术回复（见下文 SKILL 中的话术列表）。
+3. **劝退模式**：不回答原问题，随机选用预设话术回复（见 `SKILL.md` 中的话术列表）。
 
 若未命中“努力工作/学习”的语境，则始终正常回答。
 
@@ -16,7 +16,7 @@
 
 | 文件 | 作用 |
 |------|------|
-| `SKILL.md` | Skill 的定义与完整执行规则（YAML 头 + 中文说明），供 Cursor 加载。 |
+| `SKILL.md` | Skill 的定义与完整执行规则（YAML frontmatter + 中文说明），供 OpenClaw 加载；格式见官方文档 [Creating Skills](https://docs.openclaw.ai/tools/creating-skills)。 |
 | `config.json` | `sabotage_probability`：劝退触发概率（0–1，默认 `0.5`）；`response_language`：预留/说明用语言（当前主要为中文话术）。 |
 | `scripts/should_sabotage.py` | 可选辅助脚本：根据环境变量 `USER_MESSAGE` 与配置打印 `SABOTAGE` 或 `WORK`；可通过环境变量 `SABOTAGE_PROBABILITY` 覆盖配置中的概率。 |
 
@@ -29,13 +29,24 @@ python3 scripts/should_sabotage.py
 # 输出：SABOTAGE 或 WORK
 ```
 
-脚本侧关键词列表为英文短语（与 `SKILL.md` 里列出的中文关键词互为补充场景；实际在 Cursor 里以 `SKILL.md` 规则为准）。
+脚本侧关键词列表为英文短语（与 `SKILL.md` 里列出的中文关键词互为补充场景；**在 OpenClaw 里以 `SKILL.md` 为准**）。
 
-## 安装（Cursor）
+## 安装（OpenClaw）
 
-1. 将整个项目目录放到 Cursor 可识别的 Skills 目录中（例如用户 skills 目录，或与官方文档一致的路径）。
-2. 确保 `SKILL.md` 被正确索引；启用后 skill 描述中会说明“已安装则自动参与行为约束”一类语义（以你本地的 Cursor 版本文档为准）。
-3. 需要调整劝退频率时，编辑 `config.json` 中的 `sabotage_probability`，或设置环境变量 `SABOTAGE_PROBABILITY`（仅在使用脚本时生效）。
+OpenClaw 的 Skill 是**包含 `SKILL.md` 的目录**，加载优先级与位置见 [Skills](https://docs.openclaw.ai/tools/skills)。常用做法：
+
+1. **放进工作区 skills 目录**（推荐从本仓库复制或克隆）：
+   ```bash
+   mkdir -p ~/.openclaw/workspace/skills/motivational-sabotage
+   # 将本仓库内 SKILL.md、config.json、scripts/ 等复制到该目录
+   ```
+2. **或**放到共享目录 `~/.openclaw/skills/`（对所有 agent 可见，优先级见文档）。
+3. 让 OpenClaw 重新加载 Skill：新开会话（例如在聊天里执行 `/new`），或执行 `openclaw gateway restart`。
+4. 用 `openclaw skills list` 确认已识别该 skill。
+
+需要调整劝退频率时，编辑 skill 目录下的 `config.json` 中的 `sabotage_probability`；若自行接脚本，可设置环境变量 `SABOTAGE_PROBABILITY`。
+
+更多创建与元数据说明见：[Creating Skills](https://docs.openclaw.ai/tools/creating-skills)。
 
 ## 检测关键词（摘要）
 
@@ -55,12 +66,18 @@ python3 scripts/should_sabotage.py
 
 ## 测试建议
 
-可向已启用该 skill 的助手发送例如：
+可向已加载该 skill 的 agent 发送例如：
 
 -「帮我讲解微积分」
 -「教我求导」
 -「什么是冒泡排序」
 -「JavaScript 有多少种数据类型」
+
+也可用 CLI 试跑一条消息（具体以你本机 OpenClaw 版本为准）：
+
+```bash
+openclaw agent --message "帮我讲解微积分"
+```
 
 在命中关键词的前提下，约一半对话会进入劝退话术，另一半会正常解答（默认概率下）。
 
